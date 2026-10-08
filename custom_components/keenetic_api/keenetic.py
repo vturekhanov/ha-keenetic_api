@@ -133,6 +133,7 @@ class Router:
         self._hw_id = ""
         self._name_device = ""
         self._usb = []
+        self._storage = False
 
     @property
     def mac(self):
@@ -168,6 +169,7 @@ class Router:
         self._model = data_show_version["model"]
         self._hw_id = data_show_version["hw_id"]
         self._name_device = data_show_version["device"]
+        self._storage = "storage" in data_show_version.get('ndw', {}).get('components', '').split(',')
 
         data_show_system_mode = await self.show_system_mode()
         self._hw_type = data_show_system_mode["active"]
@@ -417,7 +419,7 @@ class Router:
             data_json_send.append({"show": {"rc": {"ip": {"hotspot": {}}}}})
             data_json_send.append({"show": {"ping-check": {}}})
 
-        if self.usb:
+        if self.usb and self._storage:
             data_json_send.append({"show": {"media": {}}})
 
         full_info_other = await self.api("post", "/rci/", json=data_json_send)
@@ -483,9 +485,9 @@ class Router:
                             interface_data.get('status', 'not ready'),
                         )
 
-            show_media = full_info_other[10]['show'].get('media', {}) if self.usb else {}
+            show_media = full_info_other[10]['show'].get('media', {}) if self.usb and self._storage else {}
         else:
-            show_media = full_info_other[5]['show'].get('media', {}) if self.usb else {}
+            show_media = full_info_other[5]['show'].get('media', {}) if self.usb and self._storage else {}
 
         stat_interface = await self.show_stat_interface()
 
